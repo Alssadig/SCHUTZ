@@ -1,7 +1,7 @@
 CREATE TABLE Livres (
     ID_livre INT PRIMARY KEY,
     Titre VARCHAR(255),
-    Auteur VARCHAR(255),
+    Auteur VARCHAR(255), 
     Annee_publication INT,
     Quantite INT
 );
