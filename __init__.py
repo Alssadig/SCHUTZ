@@ -2,11 +2,11 @@ from flask import Flask, render_template_string, render_template, jsonify, reque
 from flask import render_template
 from flask import json
 from urllib.request import urlopen
-from werkzeug.utils import secure_filename   
-import sqlite3   
+from werkzeug.utils import secure_filename  
+import sqlite3
 
 app = Flask(__name__)                                                                                                                  
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'  # Clé secrète pour les sessions
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'  # Clé secrète pour les sessions  
 
 # Fonction pour créer une clé "authentifie" dans la session utilisateur
 def est_authentifie():
@@ -39,24 +39,56 @@ def authentification():
 
     return render_template('formulaire_authentification.html', error=False)
 
-@app.route('/fiche_client/<int:post_id>')
-def Readfiche(post_id):
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM clients WHERE id = ?', (post_id,))
-    data = cursor.fetchall()
-    conn.close()
-    # Rendre le template HTML et transmettre les données
-    return render_template('read_data.html', data=data)
+@app.route('/formulaire_ranger/')
+def FormulaireRanger():
+    # Afficher la page HTML
+    return render_template('form_ranger.html')
 
-@app.route('/consultation/')
-def ReadBDD():
-    conn = sqlite3.connect('database.db')
+@app.route('/ajouter_composant/, methods=['POST']') 
+def RangerComposant():
+
+    allee_id = request.form['allee']
+    empl_id = request.form['emplacement']
+    ref_id = request.form['reference']
+
+    conn = sqlite3.connect('schutz.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM clients;')
+    cursor.execute('insert into inventaire (REF) values(?, ?, ?)', (allee_id, empl_id, ref_id))
     data = cursor.fetchall()
     conn.close()
-    return render_template('read_data.html', data=data)
+    
+    # Rendre le template HTML et transmettre les données
+    return redirect('/formulaire_ranger/')  # Rediriger vers la page d'accueil après l'enregistrement
+
+@app.route('/formulaire_vider/')
+def FormulaireVider():
+    # Afficher la page HTML pour vider un emplacement
+    return render_template('form_vider.html')
+	
+@app.route('/vider_emplacement/, methods=['POST']')
+def ViderEmplacement():
+
+    allee_id = request.form['allee']
+    empl_id = request.form['emplacement']
+    
+   conn = sqlite3.connect('schutz.db')
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM emplacements WHERE allee_id = 'A' AND emplacement_id = 103, (allee_id, empl_id))
+    data = cursor.fetchall()
+    conn.close()
+    
+    # Rendre le template HTML et transmettre les données
+    return redirect('/formulaire_vider/')  # Rediriger vers la page d'accueil après
+
+
+@app.route('/recherche/')
+def ReadBDD():
+    conn = sqlite3.connect('schutz.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT ref,date FROM inventaire;')
+    data = cursor.fetchall()
+    conn.close()
+    return render_template('/formulaire_ranger/')
 
 @app.route('/livres/')
 def ReadBDD2():
@@ -88,3 +120,9 @@ def enregistrer_client():
                                                                                                                                        
 if __name__ == "__main__":
   app.run(debug=True)
+
+
+
+
+
+
