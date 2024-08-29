@@ -9,8 +9,8 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from werkzeug.utils import secure_filename
 import mysql
 
-app = Flask(__name__)
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'  # Clé secrète pour les sessions
+app = Flask(__name__)                                                                                                                  
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'  # Clé secrète pour les sessions  
 
 # Fonction pour créer une clé "authentifie" dans la session utilisateur
 def est_authentifie():
@@ -20,141 +20,103 @@ def est_authentifie():
 def hello_world():
     return render_template('hello.html')
 
-@app.route('/lecture')
-def lecture():
-    if not est_authentifie():
-        # Rediriger vers la page d'authentification si l'utilisateur n'est pas authentifié
-        return redirect(url_for('authentification'))
 
-    # Si l'utilisateur est authentifié
-    return "<h2>Bravo, vous êtes authentifié</h2>"
-
-@app.route('/authentification', methods=['GET', 'POST'])
+@app.route('/authentification_user', methods=['GET', 'POST'])
 def authentification():
     if request.method == 'POST':
         # Vérifier les identifiants
-        if request.form['username'] == 'admin' and request.form['password'] == 'password':  # password à cacher par la suite
+        if request.form['username'] == 'chef' and request.form['password'] == 'equipe': # password à cacher par la suite
             session['authentifie'] = True
             # Rediriger vers la route lecture après une authentification réussie
-            return redirect(url_for('lecture'))
+            return render_template('page_chef.html')
+        elif request.form['username'] == 'techos' and request.form['password'] == 'tech1': # password à cacher par la suite
+            session['authentifie'] = True
+            # Rediriger vers la route lecture après une authentification réussie
+            return redirect(url_for('recherche'))
         else:
             # Afficher un message d'erreur si les identifiants sont incorrects
             return render_template('formulaire_authentification.html', error=True)
 
     return render_template('formulaire_authentification.html', error=False)
 
-@app.route('/formulaire_ranger/')
+@app.route('/formulaire_ranger')
 def FormulaireRanger():
     # Afficher la page HTML
-    return render_template('form_ranger.html')
+    return render_template('Ranger_un_Composant.html')
 
-@app.route('/ajouter_composant/', methods=['POST'])
+@app.route('/ajouter_composant', methods=['POST'])
 def RangerComposant():
     allee_id = request.form['allee']
-    empl_id = request.form['emplacement']
-    ref_id = request.form['reference']
+    id = request.form['emplacement']
+    ref = request.form['reference']
+    date = request.form['date']
 
     conn = sqlite3.connect('schutz.db')
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO inventaire (allee, emplacement, reference) VALUES (?, ?, ?)', (allee_id, empl_id, ref_id))
+    cursor.execute('INSERT INTO inventaire (REF, Date, ALLEE_ID, ID) VALUES (?, ?, ?, ?)', (ref, date, allee_id, id))
     conn.commit()
     conn.close()
     
     # Rediriger vers la page d'accueil après l'enregistrement
-    return redirect('/formulaire_ranger/')
+    return redirect('/formulaire_ranger')
 
-@app.route('/formulaire_vider/')
+@app.route('/formulaire_vider')
 def FormulaireVider():
     # Afficher la page HTML pour vider un emplacement
     return render_template('form_vider.html')
 
-@app.route('/vider_emplacement/', methods=['POST'])
+@app.route('/vider_emplacement', methods=['POST'])
 def ViderEmplacement():
     allee_id = request.form['allee']
-    empl_id = request.form['emplacement']
-    
+    id = request.form['emplacement']
+
     conn = sqlite3.connect('schutz.db')
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM inventaire WHERE allee = ? AND emplacement = ?', (allee_id, empl_id))
+    cursor.execute('DELETE FROM inventaire WHERE ALLEE_ID = ? AND ID = ?', (allee_id, id))
     conn.commit()
     conn.close()
     
-    # Rediriger vers la page d'accueil après
-    return redirect('/formulaire_vider/')
+    # Rediriger vers la page d'accueil après l'opération
+    return redirect('/formulaire_vider')
 
-@app.route('/recherche', methods=['GET'])
-def search_reference():
-    ref_id = request.args.get('reference')
-    data = []
-    
-    if ref_id:
+@app.route('/recherche', methods=['GET', 'POST'])
+def ReadBDD():
+    if request.method == 'POST':
+        ref = request.form['reference']
         conn = sqlite3.connect('schutz.db')
         cursor = conn.cursor()
-        cursor.execute('SELECT allee, emplacement, reference FROM inventaire WHERE reference = ?', (ref_id,))
+        cursor.execute('SELECT REF, Date, ALLEE_ID, ID FROM inventaire WHERE REF = ?', (ref,))
         data = cursor.fetchall()
         conn.close()
-    
-    return render_template('rechercher.html', data=data)
-
-@app.route('/livres/')
-def ReadBDD2():
-    conn = sqlite3.connect('database2.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM Livres;')
-    data = cursor.fetchall()
-    conn.close()
-    return render_template('read_data2.html', data=data)
-
-@app.route('/enregistrer_client', methods=['GET'])
-def formulaire_client():
-    return render_template('formulaire.html')  # afficher le formulaire
-
-@app.route('/enregistrer_client', methods=['POST'])
-def enregistrer_client():
-    nom = request.form['nom']
-    prenom = request.form['prenom']
-
-    # Connexion à la base de données
-    conn = sqlite3.connect('database.db')
-    cursor = conn.cursor()
-
-    # Exécution de la requête SQL pour insérer un nouveau client
-    cursor.execute('INSERT INTO clients (created, nom, prenom, adresse) VALUES (?, ?, ?, ?)', (1002938, nom, prenom, "ICI"))
-    conn.commit()
-    conn.close()
-    
-    # Rediriger vers la page d'accueil après l'enregistrement
-    return redirect('/consultation/')
-
-@app.route('/allees')
-def get_allees():
-    conn = sqlite3.connect('schutz.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT DISTINCT allee FROM inventaire;')
-    allees = cursor.fetchall()
-    conn.close()
-    return jsonify(allees)
-
-@app.route('/emplacements')
-def get_emplacements():
-    conn = sqlite3.connect('schutz.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT DISTINCT emplacement FROM inventaire;')
-    emplacements = cursor.fetchall()
-    conn.close()
-    return jsonify(emplacements)
-
-@app.route('/places_disponibles', methods=['GET'])
-def places_disponibles():
-    conn = sqlite3.connect('schutz.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT allee, emplacement FROM inventaire WHERE reference IS NULL')
-    data = cursor.fetchall()
-    conn.close()
-    return render_template('places_disponibles.html', data=data)
+        return render_template('form_recherche.html', data=data)
+    return render_template('form_recherche.html')
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+
+@app.route('/verifier_disponibilite', methods=['POST'])
+def verifier_disponibilite():
+    if request.method == 'POST':
+        ref = request.form.get('reference')
+
+        # Connexion à la base de données
+        conn = sqlite3.connect('schutz.db')
+        cursor = conn.cursor()
+
+        # Requête pour vérifier si la référence existe dans la base de données
+        cursor.execute('SELECT COUNT(*) FROM inventaire WHERE REF = ?', (ref,))
+        result = cursor.fetchone()
+
+        conn.close()
+
+        # Si le nombre de lignes avec cette référence est supérieur à 0, elle est disponible
+        if result[0] > 0:
+            return jsonify({'disponible': True, 'message': 'La référence est disponible.'})
+        else:
+            return jsonify({'disponible': False, 'message': 'La référence est indisponible.'})
+
 
 
 
