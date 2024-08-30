@@ -1,6 +1,7 @@
 import sqlite3
+import mysql
 
-connection = sqlite3.connect('database.db')
+connection = sqlite3.connect('SCHUTZ.db')
 
 with open('schema.sql') as f:
     connection.executescript(f.read()) 
