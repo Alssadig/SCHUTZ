@@ -42,7 +42,7 @@ def authentification():
 @app.route('/formulaire_ranger')
 def FormulaireRanger():
     # Afficher la page HTML
-    return render_template('Ranger_un_Composant.html')
+    return render_template('formulaire_ranger.html')
 
 @app.route('/ajouter_composant', methods=['POST'])
 def RangerComposant():
@@ -63,7 +63,7 @@ def RangerComposant():
 @app.route('/formulaire_vider')
 def FormulaireVider():
     # Afficher la page HTML pour vider un emplacement
-    return render_template('form_vider.html')
+    return render_template('formulaire_vider.html')
 
 @app.route('/vider_emplacement', methods=['POST'])
 def ViderEmplacement():
@@ -88,8 +88,8 @@ def ReadBDD():
         cursor.execute('SELECT REF, Date, ALLEE_ID, ID FROM inventaire WHERE REF = ?', (ref,))
         data = cursor.fetchall()
         conn.close()
-        return render_template('form_recherche.html', data=data)
-    return render_template('form_recherche.html')
+        return render_template('formulaire_recherche.html', data=data)
+    return render_template('formulaire_recherche.html')
 
 if __name__ == "__main__":
     app.run(debug=True)
